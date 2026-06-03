@@ -1,0 +1,71 @@
+{
+  "reviews": [
+    {
+      "reviewId": "gp_review_001",
+      "authorName": "TestAndroidUser",
+      "comments": [
+        {
+          "userComment": {
+            "text": "The app keeps crashing when I try to open the settings menu. Very annoying bug.",
+            "lastModified": {
+              "seconds": "1748390400",
+              "nanos": 0
+            },
+            "starRating": 1,
+            "reviewerLanguage": "en",
+            "appVersionName": "3.1.0",
+            "appVersionCode": "310"
+          }
+        }
+      ]
+    },
+    {
+      "reviewId": "gp_review_002",
+      "authorName": "SatisfiedUser",
+      "comments": [
+        {
+          "userComment": {
+            "text": "Excellent app! I use it every day. The new features are fantastic.",
+            "lastModified": {
+              "seconds": "1748476800",
+              "nanos": 0
+            },
+            "starRating": 5,
+            "reviewerLanguage": "en",
+            "appVersionName": "3.1.0",
+            "appVersionCode": "310"
+          }
+        },
+        {
+          "developerComment": {
+            "text": "Thank you for your feedback!",
+            "lastModified": {
+              "seconds": "1748563200",
+              "nanos": 0
+            }
+          }
+        }
+      ]
+    },
+    {
+      "reviewId": "gp_review_003",
+      "authorName": "JapaneseUser",
+      "comments": [
+        {
+          "userComment": {
+            "text": "アプリが重すぎて使えない。起動に30秒かかります。改善してください。",
+            "lastModified": {
+              "seconds": "1748304000",
+              "nanos": 0
+            },
+            "starRating": 2,
+            "reviewerLanguage": "ja",
+            "appVersionName": "3.0.5",
+            "appVersionCode": "305"
+          }
+        }
+      ]
+    }
+  ],
+  "tokenPagination": {}
+}

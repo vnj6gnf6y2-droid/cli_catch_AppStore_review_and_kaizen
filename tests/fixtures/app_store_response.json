@@ -1,0 +1,52 @@
+{
+  "reviews": [
+    {
+      "id": "123456789",
+      "type": "customerReviews",
+      "attributes": {
+        "rating": 1,
+        "title": "Crashes on launch",
+        "body": "After the latest update, the app crashes every time I try to open it. Very frustrating!",
+        "reviewerNickname": "TestUser1",
+        "createdDate": "2026-05-28T10:00:00Z",
+        "territory": "JP",
+        "appVersionString": "2.3.1"
+      }
+    },
+    {
+      "id": "123456790",
+      "type": "customerReviews",
+      "attributes": {
+        "rating": 5,
+        "title": "Great app!",
+        "body": "This app is amazing. Works perfectly and the UI is beautiful.",
+        "reviewerNickname": "HappyUser",
+        "createdDate": "2026-05-29T15:30:00Z",
+        "territory": "US",
+        "appVersionString": "2.3.0"
+      }
+    },
+    {
+      "id": "123456791",
+      "type": "customerReviews",
+      "attributes": {
+        "rating": 2,
+        "title": "Too slow",
+        "body": "The app takes 10 seconds to load. Please optimize the performance.",
+        "reviewerNickname": "SlowUser",
+        "createdDate": "2026-05-30T08:00:00Z",
+        "territory": "JP",
+        "appVersionString": "2.3.1"
+      }
+    }
+  ],
+  "links": {
+    "self": "https://api.appstoreconnect.apple.com/v1/apps/1234567890/customerReviews?limit=3"
+  },
+  "meta": {
+    "paging": {
+      "total": 3,
+      "limit": 200
+    }
+  }
+}

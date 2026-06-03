@@ -1,0 +1,11 @@
+secrets/
+*.db
+.env
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+reports/
+dist/
+*.egg-info/
+.mypy_cache/

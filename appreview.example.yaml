@@ -1,0 +1,45 @@
+apps:
+  - name: "MyApp iOS"
+    source: app_store
+    app_id: "1234567890"
+    territories: ["JP", "US"]    # 省略時は全territory
+
+  - name: "MyApp Android"
+    source: google_play
+    package_name: "com.example.myapp"
+
+llm:
+  provider: openai
+  classification_model: gpt-4o-mini
+  suggestion_model: gpt-4o
+  max_cost_usd_per_run: 5.00
+  batch_size: 20
+  temperature: 0.2
+
+analysis:
+  categories:
+    - performance
+    - ui_ux
+    - feature_request
+    - bug_crash
+    - billing
+    - auth
+    - notification
+    - other
+  min_reviews_for_cluster: 3
+  pii_masking: true
+
+output:
+  formats:
+    - markdown
+    - json
+  output_dir: ./reports
+  filename_template: "{date}-{app_name}-report"
+
+storage:
+  database_path: ./appreview.db
+  anonymize_reviewers: false
+
+fetch:
+  since_days: 7
+  request_delay_ms: 200
