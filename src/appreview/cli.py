@@ -506,7 +506,7 @@ async def _run_fetch(
         reviews_to_save: list[dict] = []  # type: ignore[type-arg]
 
         try:
-            review_iter = await source.fetch_reviews(since=since)
+            review_iter = source.fetch_reviews(since=since)
             async for review in review_iter:
                 # Anonymize reviewer nickname if configured
                 if config.storage.anonymize_reviewers and review.reviewer_nickname:
@@ -833,7 +833,7 @@ async def _run_full_pipeline(
                 all_reviews_for_app: list[dict] = []  # type: ignore[type-arg]
                 if source is not None:
                     try:
-                        review_iter = await source.fetch_reviews(since=since)
+                        review_iter = source.fetch_reviews(since=since)
                         async for review in review_iter:
                             if config.storage.anonymize_reviewers and review.reviewer_nickname:
                                 from appreview.analysis.pii import mask_reviewer_nickname

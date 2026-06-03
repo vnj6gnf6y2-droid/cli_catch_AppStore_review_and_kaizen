@@ -21,5 +21,6 @@ async def run_migrations(engine: AsyncEngine) -> None:
         # Enable WAL mode for better concurrent read performance with SQLite
         await conn.execute(text("PRAGMA journal_mode=WAL"))
         await conn.execute(text("PRAGMA foreign_keys=ON"))
-        # Create all tables defined in the ORM models
-        await conn.run_sync(Base.metadata.create_all)
+        # Create all tables defined in the ORM models.
+        # checkfirst=True makes every CREATE TABLE and CREATE INDEX idempotent.
+        await conn.run_sync(lambda sync_conn: Base.metadata.create_all(sync_conn, checkfirst=True))

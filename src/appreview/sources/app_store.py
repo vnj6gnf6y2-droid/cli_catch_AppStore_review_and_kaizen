@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, AsyncIterator, ClassVar, Literal
+from typing import Any, AsyncGenerator, AsyncIterator, ClassVar, Literal
 
 import httpx
 
@@ -194,26 +194,26 @@ class AppStoreSource:
             reviewer_nickname=attrs.get("reviewerNickname"),
         )
 
-    async def fetch_reviews(
+    def fetch_reviews(
         self,
         since: datetime | None = None,
-    ) -> AsyncIterator[NormalizedReview]:
+    ) -> AsyncGenerator[NormalizedReview, None]:
         """Fetch reviews from App Store Connect API.
 
         Args:
             since: Only yield reviews created after this datetime.
 
-        Yields:
-            NormalizedReview instances.
+        Returns:
+            Async generator of NormalizedReview instances.
         """
-        return self._fetch_reviews_impl(since=since)
+        return self._async_gen(since=since)
 
-    async def _fetch_reviews_impl(
+    async def _async_gen(
         self,
         since: datetime | None = None,
-    ) -> AsyncIterator[NormalizedReview]:
-        """Internal async generator for fetching reviews."""
-        url = f"{BASE_URL}/apps/{self._app_id}/customerReviews"
+    ) -> AsyncGenerator[NormalizedReview, None]:
+        """Async generator that pages through all reviews."""
+        url: str | None = f"{BASE_URL}/apps/{self._app_id}/customerReviews"
         params: dict[str, Any] = {
             "limit": MAX_LIMIT,
             "sort": "-createdDate",
@@ -240,12 +240,12 @@ class AppStoreSource:
 
                     yield review
 
-                # Handle pagination
+                # Handle pagination — next URL already contains all params
                 links = data.get("links", {})
                 next_url = links.get("next")
                 if next_url:
                     url = next_url
-                    params = {}  # URL already contains params
+                    params = {}  # params are encoded in the next URL
                     await asyncio.sleep(self._request_delay)
                 else:
                     break

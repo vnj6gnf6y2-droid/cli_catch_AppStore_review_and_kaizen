@@ -89,9 +89,10 @@ class TestMaskReviewerNickname:
     """Tests for reviewer nickname anonymization."""
 
     def test_masks_long_nickname(self) -> None:
-        """Long nicknames keep first and last character."""
+        """Long nicknames keep first and last character, middle is masked."""
         result = mask_reviewer_nickname("JohnDoe")
-        assert result == "J****e"
+        # "JohnDoe" = 7 chars → "J" + "*" * 5 + "e"
+        assert result == "J*****e"
 
     def test_masks_short_nickname(self) -> None:
         """Short nicknames are fully masked."""

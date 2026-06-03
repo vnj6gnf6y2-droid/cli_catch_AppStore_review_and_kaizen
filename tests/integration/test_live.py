@@ -40,7 +40,7 @@ class TestAppStoreLive:
         )
 
         reviews = []
-        async for review in await source.fetch_reviews():
+        async for review in source.fetch_reviews():
             reviews.append(review)
             if len(reviews) >= 5:
                 break
@@ -75,7 +75,7 @@ class TestGooglePlayLive:
         )
 
         reviews = []
-        async for review in await source.fetch_reviews():
+        async for review in source.fetch_reviews():
             reviews.append(review)
             if len(reviews) >= 5:
                 break

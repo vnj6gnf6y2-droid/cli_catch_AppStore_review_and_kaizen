@@ -41,11 +41,11 @@ class TestAppStorePagination:
             "links": {},
         }
 
-        # First page with next link
+        # First page with next link pointing to the same app_id
         first_page = {
             "data": app_store_response["reviews"],
             "links": {
-                "next": "https://api.appstoreconnect.apple.com/v1/apps/123/customerReviews?cursor=abc"
+                "next": "https://api.appstoreconnect.apple.com/v1/apps/1234567890/customerReviews?cursor=abc123"
             },
         }
 
@@ -58,15 +58,20 @@ class TestAppStorePagination:
         )
 
         with respx.mock(base_url="https://api.appstoreconnect.apple.com") as mock:
+            # First call (no cursor param) → returns first_page with next link
             mock.get("/v1/apps/1234567890/customerReviews").mock(
                 return_value=Response(200, json=first_page)
             )
-            mock.get("/v1/apps/123/customerReviews", params={"cursor": "abc"}).mock(
+            # Second call (with cursor param) → returns second_page
+            mock.get(
+                "/v1/apps/1234567890/customerReviews",
+                params={"cursor": "abc123"},
+            ).mock(
                 return_value=Response(200, json=second_page)
             )
 
             reviews = []
-            async for review in await source.fetch_reviews():
+            async for review in source.fetch_reviews():
                 reviews.append(review)
 
         # Should have fetched from both pages
@@ -120,7 +125,7 @@ class TestAppStorePagination:
             )
 
             reviews = []
-            async for review in await source.fetch_reviews(since=since_dt):
+            async for review in source.fetch_reviews(since=since_dt):
                 reviews.append(review)
 
         # Should only get the new review (old_001 is before `since`)
@@ -167,7 +172,7 @@ class TestGooglePlayFetch:
             )
 
             reviews = []
-            async for review in await source.fetch_reviews():
+            async for review in source.fetch_reviews():
                 reviews.append(review)
 
         # Should get 3 user reviews (one per review, developer reply is ignored)
@@ -214,7 +219,7 @@ class TestGooglePlayFetch:
             ).mock(return_value=Response(200, json=empty_response))
 
             reviews = []
-            async for review in await source.fetch_reviews(since=old_since):
+            async for review in source.fetch_reviews(since=old_since):
                 reviews.append(review)
 
         # Should complete without error (clamping happened internally)

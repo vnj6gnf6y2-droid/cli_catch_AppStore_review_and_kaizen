@@ -6,7 +6,7 @@ import asyncio
 import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any, AsyncIterator, ClassVar, Literal
+from typing import Any, AsyncGenerator, AsyncIterator, ClassVar, Literal
 
 import httpx
 
@@ -249,10 +249,10 @@ class GooglePlaySource:
             reviewer_nickname=reviewer_name,
         )
 
-    async def fetch_reviews(
+    def fetch_reviews(
         self,
         since: datetime | None = None,
-    ) -> AsyncIterator[NormalizedReview]:
+    ) -> AsyncGenerator[NormalizedReview, None]:
         """Fetch reviews from Google Play Developer API.
 
         IMPORTANT: This API only returns reviews from the past 7 days.
@@ -262,15 +262,15 @@ class GooglePlaySource:
         Args:
             since: Only yield reviews created after this datetime.
 
-        Yields:
-            NormalizedReview instances.
+        Returns:
+            Async generator of NormalizedReview instances.
         """
-        return self._fetch_reviews_impl(since=since)
+        return self._async_gen(since=since)
 
-    async def _fetch_reviews_impl(
+    async def _async_gen(
         self,
         since: datetime | None = None,
-    ) -> AsyncIterator[NormalizedReview]:
+    ) -> AsyncGenerator[NormalizedReview, None]:
         """Internal async generator for fetching reviews."""
         now = datetime.now(tz=timezone.utc)
         max_lookback = now - timedelta(days=MAX_LOOKBACK_DAYS)

@@ -33,29 +33,31 @@ class ReviewOrm(Base):
 
     source: Mapped[str] = mapped_column(String(20), primary_key=True)
     id: Mapped[str] = mapped_column(String(255), primary_key=True)
-    app_identifier: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
+    app_identifier: Mapped[str] = mapped_column(String(255), nullable=False)
     rating: Mapped[int] = mapped_column(Integer, nullable=False)
     title: Mapped[str | None] = mapped_column(Text, nullable=True)
     body: Mapped[str] = mapped_column(Text, nullable=False)
     locale: Mapped[str | None] = mapped_column(String(20), nullable=True)
     detected_language: Mapped[str | None] = mapped_column(String(10), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, index=True
+        DateTime(timezone=True), nullable=False
     )
     updated_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
-    app_version: Mapped[str | None] = mapped_column(String(50), nullable=True, index=True)
+    app_version: Mapped[str | None] = mapped_column(String(50), nullable=True)
     territory: Mapped[str | None] = mapped_column(String(10), nullable=True)
     raw_payload: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
     fetched_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, index=True
+        DateTime(timezone=True), nullable=False
     )
     reviewer_nickname: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
     __table_args__ = (
         Index("ix_reviews_source_app", "source", "app_identifier"),
         Index("ix_reviews_created_at", "created_at"),
+        Index("ix_reviews_app_version", "app_version"),
+        Index("ix_reviews_fetched_at", "fetched_at"),
     )
 
 

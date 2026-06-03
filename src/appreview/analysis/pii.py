@@ -15,7 +15,8 @@ _PHONE_PATTERNS = [
     # E.164 international format: +1234567890
     re.compile(r"\+\d{1,3}[-.\s]?\(?\d{1,4}\)?[-.\s]?\d{1,4}[-.\s]?\d{1,9}"),
     # Japanese formats: 03-1234-5678, 090-1234-5678, 0120-123-456
-    re.compile(r"\b0\d{1,4}[-\s]?\d{2,4}[-\s]?\d{3,4}\b"),
+    # Note: \b doesn't work at multibyte (CJK) boundaries; use negative look-around instead
+    re.compile(r"(?<![0-9])0\d{1,4}[-\s]?\d{2,4}[-\s]?\d{3,4}(?![0-9])"),
 ]
 
 _CREDIT_CARD_PATTERN = re.compile(
