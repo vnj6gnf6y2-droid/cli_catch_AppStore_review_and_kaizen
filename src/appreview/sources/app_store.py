@@ -185,7 +185,7 @@ class AppStoreSource:
             rating=int(attrs.get("rating", 0)),
             title=attrs.get("title"),
             body=attrs.get("body", ""),
-            locale=attrs.get("reviewerNickname", None),  # not locale but close enough
+            locale=attrs.get("locale", None),
             created_at=created_at,
             app_version=attrs.get("appVersionString"),
             territory=attrs.get("territory"),

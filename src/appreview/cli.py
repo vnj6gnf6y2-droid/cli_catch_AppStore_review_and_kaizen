@@ -234,11 +234,12 @@ def _run_init(config_path: Path) -> None:
         raise typer.Exit(1)
 
     # LLM provider
+    import click
     provider = typer.prompt(
         "LLM provider",
         default="openai",
         show_choices=True,
-        type=typer.Choice(["openai", "anthropic", "ollama"]),
+        type=click.Choice(["openai", "anthropic", "ollama"]),
     )
 
     # Output directory
@@ -292,18 +293,21 @@ def _run_init(config_path: Path) -> None:
     env_path = Path(".env")
     if not env_path.exists():
         from pathlib import Path as P
-        P(".env.example").exists() and P(".env.example").read_text()
-        env_path.write_text(
-            "# AppReview Insight — environment variables\n"
-            "# Copy from .env.example and fill in your credentials\n\n"
-            "APP_STORE_ISSUER_ID=\n"
-            "APP_STORE_KEY_ID=\n"
-            "APP_STORE_PRIVATE_KEY_PATH=./secrets/AuthKey_XXX.p8\n"
-            "GOOGLE_PLAY_SERVICE_ACCOUNT_JSON=./secrets/service-account.json\n"
-            "OPENAI_API_KEY=\n"
-            "ANTHROPIC_API_KEY=\n"
-            "OLLAMA_BASE_URL=http://localhost:11434\n"
-        )
+        example_path = P(".env.example")
+        if example_path.exists():
+            env_path.write_text(example_path.read_text())
+        else:
+            env_path.write_text(
+                "# AppReview Insight — environment variables\n"
+                "# Copy from .env.example and fill in your credentials\n\n"
+                "APP_STORE_ISSUER_ID=\n"
+                "APP_STORE_KEY_ID=\n"
+                "APP_STORE_PRIVATE_KEY_PATH=./secrets/AuthKey_XXX.p8\n"
+                "GOOGLE_PLAY_SERVICE_ACCOUNT_JSON=./secrets/service-account.json\n"
+                "OPENAI_API_KEY=\n"
+                "ANTHROPIC_API_KEY=\n"
+                "OLLAMA_BASE_URL=http://localhost:11434\n"
+            )
         console.print(f"[green]✓[/green] Created {env_path}")
 
     console.print("")
@@ -964,8 +968,7 @@ async def _run_full_pipeline(
 
                     # Generate report
                     output_dir = Path(config.output.output_dir)
-                    if not dry_run:
-                        output_dir.mkdir(parents=True, exist_ok=True)
+                    output_dir.mkdir(parents=True, exist_ok=True)
 
                     safe_name = app_cfg.name.lower().replace(" ", "_")
                     date_str = datetime.now(tz=timezone.utc).strftime("%Y-%m-%d")
