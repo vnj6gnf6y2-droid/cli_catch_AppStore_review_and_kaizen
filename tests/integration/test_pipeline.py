@@ -58,16 +58,12 @@ class TestAppStorePagination:
         )
 
         with respx.mock(base_url="https://api.appstoreconnect.apple.com") as mock:
-            # First call (no cursor param) → returns first_page with next link
+            # Use side_effect list to return first_page then second_page in order
             mock.get("/v1/apps/1234567890/customerReviews").mock(
-                return_value=Response(200, json=first_page)
-            )
-            # Second call (with cursor param) → returns second_page
-            mock.get(
-                "/v1/apps/1234567890/customerReviews",
-                params={"cursor": "abc123"},
-            ).mock(
-                return_value=Response(200, json=second_page)
+                side_effect=[
+                    Response(200, json=first_page),
+                    Response(200, json=second_page),
+                ]
             )
 
             reviews = []

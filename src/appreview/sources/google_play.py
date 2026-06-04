@@ -51,15 +51,16 @@ class TokenBucketRateLimiter:
 
     async def acquire(self) -> None:
         """Acquire one token, waiting if necessary."""
-        async with self._lock:
-            while True:
+        while True:
+            async with self._lock:
                 self._refill()
                 if self._tokens >= 1.0:
                     self._tokens -= 1.0
                     return
-                # Wait for one token to be available
+                # Calculate wait time before releasing the lock
                 wait_time = (1.0 - self._tokens) / self._refill_rate
-                await asyncio.sleep(wait_time)
+            # Sleep outside the lock so other coroutines can proceed
+            await asyncio.sleep(wait_time)
 
     def _refill(self) -> None:
         """Refill tokens based on elapsed time."""
