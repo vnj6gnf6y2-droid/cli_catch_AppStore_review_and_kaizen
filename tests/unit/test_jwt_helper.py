@@ -6,7 +6,6 @@ import time
 from pathlib import Path
 
 import jwt as pyjwt
-import pytest
 
 from appreview.sources.jwt_helper import AppStoreJWT
 

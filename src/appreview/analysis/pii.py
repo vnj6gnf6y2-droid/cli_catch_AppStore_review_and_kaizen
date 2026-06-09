@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import re
 
-
 # Regex patterns for PII detection
 _EMAIL_PATTERN = re.compile(
     r"\b[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}\b",

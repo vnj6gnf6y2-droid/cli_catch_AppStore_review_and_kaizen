@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -115,7 +115,9 @@ class ReviewClassifier:
         # Process batches with concurrency limit
         semaphore = asyncio.Semaphore(MAX_CONCURRENT_LLM_REQUESTS)
 
-        async def classify_batch(batch: list[NormalizedReview]) -> tuple[list[ClassificationResult], LLMUsage]:
+        async def classify_batch(
+            batch: list[NormalizedReview],
+        ) -> tuple[list[ClassificationResult], LLMUsage]:
             async with semaphore:
                 return await self._provider.classify_batch(
                     batch, self._categories, self._prompt_template
@@ -130,7 +132,7 @@ class ReviewClassifier:
         total_cost = 0.0
         model_used = ""
 
-        now = datetime.now(tz=timezone.utc)
+        now = datetime.now(tz=UTC)
 
         for i, result in enumerate(batch_results):
             if isinstance(result, Exception):
@@ -202,7 +204,8 @@ Available categories: {{ categories | join(', ') }}
 Rules:
 - Assign 1-2 categories per review (most relevant first)
 - If confidence < 0.5, use "other"
-- sentiment: "positive" (rating 4-5, praise), "negative" (rating 1-2, complaints), "neutral" (mixed/rating 3)
+- sentiment: "positive" (rating 4-5, praise), "negative" (rating 1-2, complaints),
+  "neutral" (mixed/rating 3)
 
 Reviews to classify:
 {% for review in reviews %}
@@ -216,7 +219,8 @@ Body: {{ review.body }}
 Respond with JSON matching this schema exactly:
 {
   "results": [
-    {"review_id": "...", "categories": ["cat1"], "sentiment": "positive|negative|neutral", "confidence": 0.0-1.0}
+    {"review_id": "...", "categories": ["cat1"],
+     "sentiment": "positive|negative|neutral", "confidence": 0.0-1.0}
   ]
 }
 """

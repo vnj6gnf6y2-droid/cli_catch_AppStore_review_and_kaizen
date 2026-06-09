@@ -25,7 +25,7 @@ class AuthenticationError(AppReviewError):
     exit_code = 2
 
 
-class PermissionError(AppReviewError):  # noqa: A001
+class PermissionError(AppReviewError):
     """Insufficient permissions (exit code 2)."""
 
     exit_code = 2

@@ -23,7 +23,7 @@ class AppConfig(BaseModel):
     territories: list[str] | None = None
 
     @model_validator(mode="after")
-    def validate_source_fields(self) -> "AppConfig":
+    def validate_source_fields(self) -> AppConfig:
         """Ensure the correct identifier is provided for the source."""
         if self.source == "app_store" and not self.app_id:
             msg = f"App '{self.name}': app_id is required for app_store source"

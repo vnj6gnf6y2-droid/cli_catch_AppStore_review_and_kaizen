@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from decimal import Decimal
 
-import pytest
-
 from appreview.llm.cost import estimate_tokens, get_anthropic_cost, get_openai_cost
 
 

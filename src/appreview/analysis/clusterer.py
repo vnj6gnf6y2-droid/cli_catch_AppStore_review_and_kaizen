@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -176,10 +176,10 @@ class ReviewClusterer:
         total_output = 0
         total_cost = 0.0
         model_used = ""
-        now = datetime.now(tz=timezone.utc)
+        now = datetime.now(tz=UTC)
 
-        for (category, cat_reviews), result in zip(
-            eligible_categories.items(), results
+        for (category, _cat_reviews), result in zip(
+            eligible_categories.items(), results, strict=False
         ):
             if isinstance(result, Exception):
                 logger.error(
@@ -235,7 +235,8 @@ class ReviewClusterer:
 
 
 DEFAULT_SUGGEST_TEMPLATE = """\
-You are an expert mobile app product manager. Analyze these negative app reviews in the "{{ category }}" category.
+You are an expert mobile app product manager. Analyze these negative app reviews
+in the "{{ category }}" category.
 
 Group them by the specific problem they describe. For each group:
 1. Give a concise title describing the problem

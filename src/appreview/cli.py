@@ -3,11 +3,10 @@
 from __future__ import annotations
 
 import asyncio
-import sys
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
-from typing import Annotated, Optional
+from typing import Annotated
 
 import typer
 from rich.console import Console
@@ -73,7 +72,7 @@ def _parse_since(since_str: str) -> datetime:
         typer.BadParameter: If format is unrecognized.
     """
     since_str = since_str.strip()
-    now = datetime.now(tz=timezone.utc)
+    now = datetime.now(tz=UTC)
 
     if since_str.endswith("d"):
         try:
@@ -90,7 +89,7 @@ def _parse_since(since_str: str) -> datetime:
     else:
         try:
             dt = datetime.strptime(since_str, "%Y-%m-%d")
-            return dt.replace(tzinfo=timezone.utc)
+            return dt.replace(tzinfo=UTC)
         except ValueError:
             pass
 
@@ -437,10 +436,14 @@ def _create_source(app_cfg: object, env: object, delay_ms: int) -> object:
 def fetch(
     config: ConfigPathArg = DEFAULT_CONFIG,
     app_name: Annotated[
-        Optional[str], typer.Option("--app", help="Name of app to fetch (default: all).")
+        str | None, typer.Option("--app", help="Name of app to fetch (default: all).")
     ] = None,
     since: Annotated[
-        Optional[str], typer.Option("--since", help="Fetch reviews since (e.g. '7d', '24h', '2026-05-01').")
+        str | None,
+        typer.Option(
+            "--since",
+            help="Fetch reviews since (e.g. '7d', '24h', '2026-05-01').",
+        ),
     ] = None,
     verbose: VerboseArg = False,
     quiet: QuietArg = False,
@@ -459,13 +462,10 @@ async def _run_fetch(
     dry_run: bool,
 ) -> None:
     """Fetch reviews from stores."""
-    from appreview.config import load_config, load_env_settings, validate_provider_credentials
+    from appreview.config import load_config, load_env_settings
     from appreview.exceptions import AppReviewError, ConfigError
-    from appreview.logging import get_logger
     from appreview.storage.migrations import run_migrations
     from appreview.storage.repository import ReviewRepository
-
-    log = get_logger(__name__)
 
     try:
         config = load_config(config_path)
@@ -475,7 +475,7 @@ async def _run_fetch(
 
     env = load_env_settings()
     since = _parse_since(since_str) if since_str else (
-        datetime.now(tz=timezone.utc) - timedelta(days=config.fetch.since_days)
+        datetime.now(tz=UTC) - timedelta(days=config.fetch.since_days)
     )
 
     # Select apps to fetch
@@ -515,8 +515,11 @@ async def _run_fetch(
                 # Anonymize reviewer nickname if configured
                 if config.storage.anonymize_reviewers and review.reviewer_nickname:
                     from appreview.analysis.pii import mask_reviewer_nickname
+                    masked = mask_reviewer_nickname(
+                        review.reviewer_nickname
+                    )
                     review = review.model_copy(
-                        update={"reviewer_nickname": mask_reviewer_nickname(review.reviewer_nickname)}
+                        update={"reviewer_nickname": masked}
                     )
 
                 review_dict = review.model_dump()
@@ -554,7 +557,7 @@ async def _run_fetch(
 def analyze(
     config: ConfigPathArg = DEFAULT_CONFIG,
     run_id: Annotated[
-        Optional[str], typer.Option("--run-id", help="Analyze within a specific run ID.")
+        str | None, typer.Option("--run-id", help="Analyze within a specific run ID.")
     ] = None,
     verbose: VerboseArg = False,
     quiet: QuietArg = False,
@@ -572,6 +575,8 @@ async def _run_analyze(
     dry_run: bool,
 ) -> None:
     """Run analysis pipeline on stored reviews."""
+    from sqlalchemy.ext.asyncio import AsyncSession
+
     from appreview.analysis.classifier import ReviewClassifier
     from appreview.analysis.clusterer import ReviewClusterer
     from appreview.config import load_config, load_env_settings
@@ -583,8 +588,6 @@ async def _run_analyze(
         ReviewRepository,
         RunRepository,
     )
-
-    from sqlalchemy.ext.asyncio import AsyncSession
 
     try:
         config = load_config(config_path)
@@ -687,6 +690,7 @@ async def _run_analyze(
 
                     # Get all classifications for clustering
                     from sqlalchemy import select
+
                     from appreview.storage.models import ClassificationOrm
                     clf_result = await session.execute(
                         select(ClassificationOrm).where(
@@ -713,7 +717,7 @@ async def _run_analyze(
                         reviews_classified=len(domain_reviews),
                         llm_cost_usd=float(total_cost),
                         status="success",
-                        finished_at=datetime.now(tz=timezone.utc),
+                        finished_at=datetime.now(tz=UTC),
                     )
                 else:
                     console.print(
@@ -728,10 +732,14 @@ async def _run_analyze(
 def run_pipeline(
     config: ConfigPathArg = DEFAULT_CONFIG,
     app_name: Annotated[
-        Optional[str], typer.Option("--app", help="Name of app to process (default: all).")
+        str | None, typer.Option("--app", help="Name of app to process (default: all).")
     ] = None,
     since: Annotated[
-        Optional[str], typer.Option("--since", help="Fetch reviews since (e.g. '7d', '24h', '2026-05-01').")
+        str | None,
+        typer.Option(
+            "--since",
+            help="Fetch reviews since (e.g. '7d', '24h', '2026-05-01').",
+        ),
     ] = None,
     yes: Annotated[
         bool, typer.Option("-y", "--yes", help="Auto-approve cost confirmation prompt.")
@@ -754,10 +762,13 @@ async def _run_full_pipeline(
     dry_run: bool,
 ) -> None:
     """Run the full pipeline: fetch → analyze → report."""
+    from sqlalchemy import select
+    from sqlalchemy.ext.asyncio import AsyncSession
+
     from appreview.analysis.classifier import ReviewClassifier
     from appreview.analysis.clusterer import ReviewClusterer
     from appreview.config import load_config, load_env_settings, validate_provider_credentials
-    from appreview.exceptions import AppReviewError, ConfigError, CostLimitExceededError
+    from appreview.exceptions import AppReviewError, ConfigError
     from appreview.llm.cost import estimate_tokens
     from appreview.report.json_output import generate_json_report
     from appreview.report.markdown import generate_markdown_report
@@ -770,9 +781,6 @@ async def _run_full_pipeline(
         ReviewRepository,
         RunRepository,
     )
-
-    from sqlalchemy import select
-    from sqlalchemy.ext.asyncio import AsyncSession
 
     try:
         config = load_config(config_path)
@@ -790,7 +798,7 @@ async def _run_full_pipeline(
         raise typer.Exit(2)
 
     since = _parse_since(since_str) if since_str else (
-        datetime.now(tz=timezone.utc) - timedelta(days=config.fetch.since_days)
+        datetime.now(tz=UTC) - timedelta(days=config.fetch.since_days)
     )
 
     apps_to_process = [
@@ -841,8 +849,11 @@ async def _run_full_pipeline(
                         async for review in review_iter:
                             if config.storage.anonymize_reviewers and review.reviewer_nickname:
                                 from appreview.analysis.pii import mask_reviewer_nickname
+                                masked = mask_reviewer_nickname(
+                                    review.reviewer_nickname
+                                )
                                 review = review.model_copy(
-                                    update={"reviewer_nickname": mask_reviewer_nickname(review.reviewer_nickname)}
+                                    update={"reviewer_nickname": masked}
                                 )
                             all_reviews_for_app.append(review.model_dump())
                     except AppReviewError as e:
@@ -852,7 +863,7 @@ async def _run_full_pipeline(
                                 run_id,
                                 status="failed",
                                 error_message=str(e),
-                                finished_at=datetime.now(tz=timezone.utc),
+                                finished_at=datetime.now(tz=UTC),
                             )
                         raise typer.Exit(e.exit_code) from e
 
@@ -862,7 +873,8 @@ async def _run_full_pipeline(
                     await run_repo.update_run(run_id, reviews_fetched=len(all_reviews_for_app))
                 elif dry_run:
                     console.print(
-                        f"     [yellow][dry-run][/yellow] Would save {len(all_reviews_for_app)} reviews"
+                        f"     [yellow][dry-run][/yellow] Would save"
+                        f" {len(all_reviews_for_app)} reviews"
                     )
 
                 # ── Step 2: Classify ───────────────────────────────────
@@ -880,7 +892,7 @@ async def _run_full_pipeline(
                         await run_repo.update_run(
                             run_id,
                             status="success",
-                            finished_at=datetime.now(tz=timezone.utc),
+                            finished_at=datetime.now(tz=UTC),
                         )
                     continue
 
@@ -905,8 +917,10 @@ async def _run_full_pipeline(
                 ]
 
                 # Cost estimate
-                total_chars = sum(len(r.body) for r in domain_reviews)
-                est_input_tokens = estimate_tokens(" ".join(r.body for r in domain_reviews[:5]) * (len(domain_reviews) // 5 + 1))
+                sample_text = " ".join(r.body for r in domain_reviews[:5])
+                est_input_tokens = estimate_tokens(
+                    sample_text * (len(domain_reviews) // 5 + 1)
+                )
                 est_output_tokens = len(domain_reviews) * 20
                 est_cost = llm_provider.estimate_cost(  # type: ignore[attr-defined]
                     est_input_tokens, est_output_tokens,
@@ -935,10 +949,14 @@ async def _run_full_pipeline(
                     clf_dicts, clf_usage = await classifier.classify_reviews(domain_reviews)
                     await clf_repo.save_classifications(clf_dicts)
                     total_cost += clf_usage.cost_usd
-                    console.print(f"     ✓ Classified {len(domain_reviews)} reviews (${float(clf_usage.cost_usd):.4f})")
+                    console.print(
+                        f"     ✓ Classified {len(domain_reviews)} reviews"
+                        f" (${float(clf_usage.cost_usd):.4f})"
+                    )
                 else:
                     console.print(
-                        f"     [yellow][dry-run][/yellow] Would classify {len(domain_reviews)} reviews"
+                        f"     [yellow][dry-run][/yellow] Would classify"
+                        f" {len(domain_reviews)} reviews"
                     )
 
                 # ── Step 3: Cluster & Report ───────────────────────────
@@ -971,7 +989,7 @@ async def _run_full_pipeline(
                     output_dir.mkdir(parents=True, exist_ok=True)
 
                     safe_name = app_cfg.name.lower().replace(" ", "_")
-                    date_str = datetime.now(tz=timezone.utc).strftime("%Y-%m-%d")
+                    date_str = datetime.now(tz=UTC).strftime("%Y-%m-%d")
                     base_name = (
                         config.output.filename_template
                         .replace("{date}", date_str)
@@ -1001,7 +1019,7 @@ async def _run_full_pipeline(
                         status="success",
                         reviews_classified=len(domain_reviews),
                         llm_cost_usd=float(total_cost),
-                        finished_at=datetime.now(tz=timezone.utc),
+                        finished_at=datetime.now(tz=UTC),
                     )
                 else:
                     console.print(
@@ -1036,16 +1054,16 @@ def generate_report(
 
 async def _run_report(config_path: Path, run_id: str, fmt: str) -> None:
     """Regenerate report from existing run data."""
+    from sqlalchemy import select
+    from sqlalchemy.ext.asyncio import AsyncSession
+
     from appreview.config import load_config
     from appreview.exceptions import ConfigError
     from appreview.report.json_output import generate_json_report
     from appreview.report.markdown import generate_markdown_report
     from appreview.storage.migrations import run_migrations
-    from appreview.storage.repository import ClusterRepository, RunRepository
-
-    from sqlalchemy import select
-    from sqlalchemy.ext.asyncio import AsyncSession
     from appreview.storage.models import ClassificationOrm, ReviewOrm
+    from appreview.storage.repository import ClusterRepository, RunRepository
 
     try:
         config = load_config(config_path)
@@ -1097,7 +1115,7 @@ async def _run_report(config_path: Path, run_id: str, fmt: str) -> None:
         output_dir = Path(config.output.output_dir)
         output_dir.mkdir(parents=True, exist_ok=True)
         safe_name = app_cfg.name.lower().replace(" ", "_")
-        date_str = datetime.now(tz=timezone.utc).strftime("%Y-%m-%d")
+        date_str = datetime.now(tz=UTC).strftime("%Y-%m-%d")
         base_name = (
             config.output.filename_template
             .replace("{date}", date_str)
@@ -1127,7 +1145,7 @@ async def _run_report(config_path: Path, run_id: str, fmt: str) -> None:
 def cost_estimate(
     config: ConfigPathArg = DEFAULT_CONFIG,
     since: Annotated[
-        Optional[str], typer.Option("--since", help="Estimate cost for reviews since.")
+        str | None, typer.Option("--since", help="Estimate cost for reviews since.")
     ] = None,
     verbose: VerboseArg = False,
     quiet: QuietArg = False,
@@ -1140,13 +1158,13 @@ def cost_estimate(
 
 async def _run_cost_estimate(config_path: Path, since_str: str | None) -> None:
     """Estimate cost based on unclassified reviews."""
-    from appreview.config import load_config
+    from sqlalchemy.ext.asyncio import AsyncSession
+
+    from appreview.config import load_config, load_env_settings
     from appreview.exceptions import ConfigError
     from appreview.llm.cost import estimate_tokens
     from appreview.storage.migrations import run_migrations
     from appreview.storage.repository import ReviewRepository
-
-    from sqlalchemy.ext.asyncio import AsyncSession
 
     try:
         config = load_config(config_path)
@@ -1154,14 +1172,15 @@ async def _run_cost_estimate(config_path: Path, since_str: str | None) -> None:
         err_console.print(f"[red]Config error:[/red] {e}")
         raise typer.Exit(1) from e
 
-    since = _parse_since(since_str) if since_str else (
-        datetime.now(tz=timezone.utc) - timedelta(days=config.fetch.since_days)
+    _since = _parse_since(since_str) if since_str else (
+        datetime.now(tz=UTC) - timedelta(days=config.fetch.since_days)
     )
 
     engine = _get_engine(config.storage.database_path)  # type: ignore[arg-type]
     await run_migrations(engine)  # type: ignore[arg-type]
 
-    llm_provider = _get_llm_provider(config, env := load_env_settings())  # type: ignore[arg-type]
+    env = load_env_settings()
+    llm_provider = _get_llm_provider(config, env)  # type: ignore[arg-type]
 
     total_cost = Decimal("0")
     total_reviews = 0
@@ -1197,7 +1216,10 @@ async def _run_cost_estimate(config_path: Path, since_str: str | None) -> None:
             total_cost += cost
             total_reviews += len(reviews)
 
-    console.print(f"\n[bold]Total:[/bold] {total_reviews} reviews, estimated cost: [cyan]${float(total_cost):.4f}[/cyan]")
+    console.print(
+        f"\n[bold]Total:[/bold] {total_reviews} reviews, "
+        f"estimated cost: [cyan]${float(total_cost):.4f}[/cyan]"
+    )
 
     if float(total_cost) > config.llm.max_cost_usd_per_run:
         console.print(
@@ -1222,12 +1244,12 @@ def list_runs(
 
 async def _run_list_runs(config_path: Path, limit: int) -> None:
     """List run history from database."""
+    from sqlalchemy.ext.asyncio import AsyncSession
+
     from appreview.config import load_config
     from appreview.exceptions import ConfigError
     from appreview.storage.migrations import run_migrations
     from appreview.storage.repository import RunRepository
-
-    from sqlalchemy.ext.asyncio import AsyncSession
 
     try:
         config = load_config(config_path)
@@ -1282,5 +1304,5 @@ def _format_dt_short(dt: datetime | None) -> str:
     if dt is None:
         return "N/A"
     if dt.tzinfo is None:
-        dt = dt.replace(tzinfo=timezone.utc)
+        dt = dt.replace(tzinfo=UTC)
     return dt.strftime("%Y-%m-%d %H:%M")

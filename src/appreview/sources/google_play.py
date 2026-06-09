@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import asyncio
 import time
-from datetime import datetime, timedelta, timezone
+from collections.abc import AsyncGenerator
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import Any, AsyncGenerator, AsyncIterator, ClassVar, Literal
+from typing import Any, ClassVar, Literal
 
 import httpx
 
@@ -100,9 +101,9 @@ class GooglePlaySource:
             capacity=float(RATE_LIMIT_REQUESTS),
             refill_rate=RATE_LIMIT_REQUESTS / RATE_LIMIT_WINDOW,
         )
-        self._credentials: Any = None
+        self._credentials: object = None
 
-    def _get_credentials(self) -> Any:
+    def _get_credentials(self) -> object:
         """Get or create Google OAuth2 credentials."""
         if self._credentials is None:
             from google.oauth2 import service_account  # type: ignore[import]
@@ -203,7 +204,7 @@ class GooglePlaySource:
         """
         review_id = data.get("reviewId", "")
         comments = data.get("comments", [])
-        now = datetime.now(tz=timezone.utc)
+        now = datetime.now(tz=UTC)
 
         # Find the user comment (not developer reply)
         user_comment: dict[str, Any] | None = None
@@ -219,7 +220,7 @@ class GooglePlaySource:
         last_modified = user_comment.get("lastModified", {})
         seconds = last_modified.get("seconds", 0)
         try:
-            created_at = datetime.fromtimestamp(int(seconds), tz=timezone.utc)
+            created_at = datetime.fromtimestamp(int(seconds), tz=UTC)
         except (ValueError, OSError):
             created_at = now
 
@@ -273,7 +274,7 @@ class GooglePlaySource:
         since: datetime | None = None,
     ) -> AsyncGenerator[NormalizedReview, None]:
         """Internal async generator for fetching reviews."""
-        now = datetime.now(tz=timezone.utc)
+        now = datetime.now(tz=UTC)
         max_lookback = now - timedelta(days=MAX_LOOKBACK_DAYS)
 
         if since is not None and since < max_lookback:

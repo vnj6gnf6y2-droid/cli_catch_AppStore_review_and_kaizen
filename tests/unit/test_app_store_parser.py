@@ -2,10 +2,8 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
-
-import pytest
 
 from appreview.sources.app_store import AppStoreSource
 
@@ -93,8 +91,8 @@ class TestAppStoreParser:
                 "createdDate": "not-a-date",
             },
         }
-        before = datetime.now(tz=timezone.utc)
+        before = datetime.now(tz=UTC)
         review = AppStoreSource._parse_review(raw, "app123")
-        after = datetime.now(tz=timezone.utc)
+        after = datetime.now(tz=UTC)
         # Should not raise, created_at should be recent
         assert before <= review.created_at <= after

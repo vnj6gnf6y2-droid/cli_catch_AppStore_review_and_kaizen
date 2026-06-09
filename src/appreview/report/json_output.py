@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import json
 from collections import Counter
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
+from appreview.config import AppConfig
 from appreview.storage.models import ClassificationOrm, ClusterOrm, ReviewOrm, RunOrm
 
 SCHEMA_VERSION = "0.1"
@@ -14,7 +15,7 @@ SCHEMA_VERSION = "0.1"
 
 def generate_json_report(
     run: RunOrm,
-    app_config: Any,
+    app_config: AppConfig,
     reviews: list[ReviewOrm],
     classifications: list[ClassificationOrm],
     clusters: list[ClusterOrm],
@@ -103,7 +104,7 @@ def generate_json_report(
     report: dict[str, Any] = {
         "schema_version": SCHEMA_VERSION,
         "run_id": run.id,
-        "generated_at": datetime.now(tz=timezone.utc).isoformat(),
+        "generated_at": datetime.now(tz=UTC).isoformat(),
         "app": {
             "name": app_config.name,
             "source": source,

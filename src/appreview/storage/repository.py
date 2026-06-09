@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
-from typing import Sequence
+from collections.abc import Sequence
+from datetime import UTC, datetime
 
-from sqlalchemy import delete, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -68,6 +68,9 @@ class ReviewRepository:
     ) -> Sequence[ReviewOrm]:
         """Get reviews that haven't been classified yet.
 
+        Uses a NOT EXISTS subquery for efficiency instead of loading
+        all classified IDs into memory.
+
         Args:
             source: 'app_store' or 'google_play'.
             app_identifier: app_id or package_name.
@@ -75,16 +78,21 @@ class ReviewRepository:
         Returns:
             List of unclassified ReviewOrm instances.
         """
-        classified_ids_stmt = select(ClassificationOrm.review_id).where(
-            ClassificationOrm.review_source == source
+        from sqlalchemy import exists
+
+        classified_subq = (
+            select(ClassificationOrm.review_id)
+            .where(
+                ClassificationOrm.review_source == ReviewOrm.source,
+                ClassificationOrm.review_id == ReviewOrm.id,
+            )
+            .correlate(ReviewOrm)
         )
-        classified_result = await self._session.execute(classified_ids_stmt)
-        classified_ids = {row[0] for row in classified_result.all()}
 
         stmt = select(ReviewOrm).where(
             ReviewOrm.source == source,
             ReviewOrm.app_identifier == app_identifier,
-            ReviewOrm.id.notin_(classified_ids) if classified_ids else ReviewOrm.id.isnot(None),
+            ~exists(classified_subq),
         )
         result = await self._session.execute(stmt)
         return result.scalars().all()
@@ -125,12 +133,12 @@ class ReviewRepository:
         Returns:
             Total review count.
         """
-        stmt = select(ReviewOrm).where(
+        stmt = select(func.count()).select_from(ReviewOrm).where(
             ReviewOrm.source == source,
             ReviewOrm.app_identifier == app_identifier,
         )
         result = await self._session.execute(stmt)
-        return len(result.scalars().all())
+        return result.scalar_one()
 
 
 class ClassificationRepository:
@@ -265,7 +273,7 @@ class RunRepository:
         """
         run = RunOrm(
             id=str(uuid.uuid4()),
-            started_at=datetime.now(tz=timezone.utc),
+            started_at=datetime.now(tz=UTC),
             status="running",
             app_name=app_name,
         )

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -13,7 +13,6 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 
 from appreview.sources.base import NormalizedReview
 from appreview.storage.migrations import run_migrations
-from appreview.storage.models import ClassificationOrm, ClusterOrm, ReviewOrm, RunOrm
 
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
 
@@ -44,18 +43,18 @@ def sample_review() -> NormalizedReview:
         body="After the update, the app crashes every time. Please fix this bug!",
         locale="en-US",
         detected_language="en",
-        created_at=datetime(2026, 5, 28, 10, 0, 0, tzinfo=timezone.utc),
+        created_at=datetime(2026, 5, 28, 10, 0, 0, tzinfo=UTC),
         app_version="2.3.1",
         territory="US",
         raw_payload={"id": "test_review_001", "type": "customerReviews"},
-        fetched_at=datetime(2026, 6, 1, 0, 0, 0, tzinfo=timezone.utc),
+        fetched_at=datetime(2026, 6, 1, 0, 0, 0, tzinfo=UTC),
     )
 
 
 @pytest.fixture
 def sample_reviews() -> list[NormalizedReview]:
     """Create a list of sample reviews for testing."""
-    now = datetime(2026, 6, 1, 0, 0, 0, tzinfo=timezone.utc)
+    now = datetime(2026, 6, 1, 0, 0, 0, tzinfo=UTC)
     return [
         NormalizedReview(
             id=f"review_{i:03d}",
@@ -65,7 +64,7 @@ def sample_reviews() -> list[NormalizedReview]:
             title=title,
             body=body,
             detected_language="en",
-            created_at=datetime(2026, 5, 28 + i % 3, 10, 0, 0, tzinfo=timezone.utc),
+            created_at=datetime(2026, 5, 28 + i % 3, 10, 0, 0, tzinfo=UTC),
             app_version=version,
             raw_payload={},
             fetched_at=now,
