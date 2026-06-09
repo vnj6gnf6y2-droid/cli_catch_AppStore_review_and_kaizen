@@ -3,9 +3,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
-
-import pytest
+from datetime import UTC, datetime
 
 from appreview.report.json_output import generate_json_report
 from appreview.report.markdown import generate_markdown_report
@@ -16,8 +14,8 @@ def _make_run(run_id: str | None = None) -> RunOrm:
     """Create a sample RunOrm for testing."""
     run = RunOrm()
     run.id = run_id or str(uuid.uuid4())
-    run.started_at = datetime(2026, 6, 3, 12, 0, 0, tzinfo=timezone.utc)
-    run.finished_at = datetime(2026, 6, 3, 12, 5, 0, tzinfo=timezone.utc)
+    run.started_at = datetime(2026, 6, 3, 12, 0, 0, tzinfo=UTC)
+    run.finished_at = datetime(2026, 6, 3, 12, 5, 0, tzinfo=UTC)
     run.status = "success"
     run.app_name = "TestApp"
     run.reviews_fetched = 50
@@ -45,12 +43,12 @@ def _make_review_orm(
     r.body = body
     r.locale = "en-US"
     r.detected_language = "en"
-    r.created_at = datetime(2026, 5, 28, tzinfo=timezone.utc)
+    r.created_at = datetime(2026, 5, 28, tzinfo=UTC)
     r.updated_at = None
     r.app_version = version
     r.territory = "US"
     r.raw_payload = {}
-    r.fetched_at = datetime(2026, 6, 1, tzinfo=timezone.utc)
+    r.fetched_at = datetime(2026, 6, 1, tzinfo=UTC)
     r.reviewer_nickname = "TestUser"
     return r
 
@@ -70,7 +68,7 @@ def _make_clf(
     clf.category = category
     clf.sentiment = sentiment
     clf.confidence = confidence
-    clf.classified_at = datetime(2026, 6, 3, 12, 0, tzinfo=timezone.utc)
+    clf.classified_at = datetime(2026, 6, 3, 12, 0, tzinfo=UTC)
     clf.model_used = "gpt-4o-mini"
     return clf
 
@@ -95,7 +93,7 @@ def _make_cluster(
         "Add crash reporting",
     ]
     c.review_ids = [f"review_{i}" for i in range(member_count)]
-    c.created_at = datetime(2026, 6, 3, 12, 0, tzinfo=timezone.utc)
+    c.created_at = datetime(2026, 6, 3, 12, 0, tzinfo=UTC)
     return c
 
 

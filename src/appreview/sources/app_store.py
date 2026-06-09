@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime, timezone
+from collections.abc import AsyncGenerator
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, AsyncGenerator, AsyncIterator, ClassVar, Literal
+from typing import Any, ClassVar, Literal
 
 import httpx
 
@@ -170,7 +171,7 @@ class AppStoreSource:
             NormalizedReview instance.
         """
         attrs = data.get("attributes", {})
-        now = datetime.now(tz=timezone.utc)
+        now = datetime.now(tz=UTC)
 
         created_str = attrs.get("createdDate", "")
         try:

@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 from collections import Counter
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
+from appreview.config import AppConfig
 from appreview.storage.models import ClassificationOrm, ClusterOrm, ReviewOrm, RunOrm
 
 
@@ -14,13 +15,13 @@ def _format_dt(dt: datetime | None) -> str:
     if dt is None:
         return "N/A"
     if dt.tzinfo is None:
-        dt = dt.replace(tzinfo=timezone.utc)
+        dt = dt.replace(tzinfo=UTC)
     return dt.strftime("%Y-%m-%d %H:%M UTC")
 
 
 def generate_markdown_report(
     run: RunOrm,
-    app_config: Any,
+    app_config: AppConfig,
     reviews: list[ReviewOrm],
     classifications: list[ClassificationOrm],
     clusters: list[ClusterOrm],
@@ -96,7 +97,7 @@ def generate_markdown_report(
     # Header
     lines.append(f"# AppReview Insight Report — {app_config.name}")
     lines.append(
-        f"Generated: {_format_dt(datetime.now(tz=timezone.utc))}  |  Run ID: {run.id}"
+        f"Generated: {_format_dt(datetime.now(tz=UTC))}  |  Run ID: {run.id}"
     )
     lines.append("")
 
@@ -186,11 +187,11 @@ def generate_markdown_report(
     return "\n".join(lines)
 
 
-def _empty_report(run: RunOrm, app_config: Any) -> str:
+def _empty_report(run: RunOrm, app_config: AppConfig) -> str:
     """Generate an empty report when no reviews were found."""
     return (
         f"# AppReview Insight Report — {app_config.name}\n"
-        f"Generated: {_format_dt(datetime.now(tz=timezone.utc))}  |  Run ID: {run.id}\n\n"
+        f"Generated: {_format_dt(datetime.now(tz=UTC))}  |  Run ID: {run.id}\n\n"
         "## Summary\n\n"
         "No reviews found for the specified time period.\n"
     )

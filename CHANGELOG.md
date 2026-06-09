@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased] — 2026-06-09
+
+### Changed
+
+- **Lint 全解消**: `ruff` 129件の自動修正 + 26件の手動修正で全違反をクリア
+  - `UP017` — `timezone.utc` → `datetime.UTC` エイリアスに統一
+  - `UP035` — `typing.AsyncGenerator/AsyncIterator/Sequence` → `collections.abc` へ移行
+  - `UP045` — `Optional[X]` → `X | None` 形式に統一
+  - `UP037` — 文字列型アノテーションからクォートを除去
+  - `I001` — import ブロックのソート整理
+  - `B007` — 未使用ループ変数を `_` プレフィックスに変更
+  - `B905` — `zip()` に `strict=False` を明示
+  - `RUF100` — 不要な `noqa` コメントを除去
+  - `F841` — 未使用変数 (`log`, `total_chars`, `since`, `env`) を除去
+  - `E501` — 100文字超の行を全て折り返し
+  - `ANN401` — `Any` 型シグネチャを具体型に改善 (report 関数の `app_config: AppConfig`, `google_play.py` の `_get_credentials`)
+
+- **`repository.py` 最適化**
+  - `count_reviews()`: 全行フェッチ → `SELECT COUNT(*)` に変更（大量データで O(1) に）
+  - `get_unclassified_reviews()`: classified ID を Python セットで保持する方式 → SQL `NOT EXISTS` 相関サブクエリに変更（メモリ効率向上）
+
+- **`cli.py` 改善**
+  - `_run_cost_estimate()` の `load_env_settings` 未インポートバグを修正
+  - `_run_fetch()` の未使用 `log = get_logger(...)` を除去
+
+---
+
 ## [0.1.0] — 2026-06-03
 
 ### Added

@@ -2,13 +2,11 @@
 
 from __future__ import annotations
 
-import json
 from decimal import Decimal
 from typing import Any, ClassVar
 
 from jinja2 import Template
 
-from appreview.exceptions import LLMResponseError
 from appreview.llm.base import ClassificationResult, ClusterResult, LLMProvider, LLMUsage
 from appreview.llm.cost import get_anthropic_cost
 from appreview.logging import get_logger

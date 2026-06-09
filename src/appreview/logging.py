@@ -8,9 +8,14 @@ from typing import Any
 
 import structlog
 
+# structlog processor type aliases
+_StructlogLogger = object  # structlog uses Any internally for logger
+
 
 def _mask_secrets(
-    logger: Any, method_name: str, event_dict: dict[str, Any]
+    logger: _StructlogLogger,
+    method_name: str,
+    event_dict: dict[str, Any],
 ) -> dict[str, Any]:
     """Mask API keys and JWTs in log records."""
     sensitive_keys = {"api_key", "token", "jwt", "authorization", "private_key", "secret"}

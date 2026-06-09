@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from appreview.analysis.pii import mask_pii, mask_reviewer_nickname
 
 

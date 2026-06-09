@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from appreview.config import AppReviewConfig, load_config
+from appreview.config import load_config
 from appreview.exceptions import ConfigError
 
 

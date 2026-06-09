@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-import asyncio
-import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -83,7 +81,7 @@ class TestAppStorePagination:
         """Fetching should stop when reaching reviews older than 'since'."""
         from appreview.sources.app_store import AppStoreSource
 
-        since_dt = datetime(2026, 5, 27, tzinfo=timezone.utc)
+        since_dt = datetime(2026, 5, 27, tzinfo=UTC)
 
         response_data = {
             "data": [
@@ -138,7 +136,7 @@ class TestGooglePlayFetch:
         self, google_play_response: dict, tmp_path: Path
     ) -> None:
         """Should parse Google Play API fixture response correctly."""
-        from unittest.mock import AsyncMock, MagicMock, patch
+        from unittest.mock import MagicMock
 
         from appreview.sources.google_play import GooglePlaySource
 
@@ -183,7 +181,6 @@ class TestGooglePlayFetch:
     ) -> None:
         """Should warn and clamp since to 7 days for Google Play."""
         from datetime import timedelta
-        from unittest.mock import AsyncMock, patch
 
         from appreview.sources.google_play import GooglePlaySource
 
@@ -201,7 +198,7 @@ class TestGooglePlayFetch:
         mock_creds.token = "token"
 
         # Request reviews from 30 days ago
-        old_since = datetime.now(tz=timezone.utc) - timedelta(days=30)
+        old_since = datetime.now(tz=UTC) - timedelta(days=30)
 
         empty_response = {"reviews": [], "tokenPagination": {}}
 

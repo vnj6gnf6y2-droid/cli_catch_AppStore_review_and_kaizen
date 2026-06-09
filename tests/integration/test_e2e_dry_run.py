@@ -2,11 +2,8 @@
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
 
-import pytest
 import respx
 from httpx import Response
 from typer.testing import CliRunner
@@ -140,8 +137,6 @@ class TestDryRun:
         cfg["fetch"]["request_delay_ms"] = 0
         with sample_config_yaml.open("w") as f:
             yaml.dump(cfg, f)
-
-        db_path = tmp_path / "test.db"
 
         response_data = {
             "data": app_store_response["reviews"],
